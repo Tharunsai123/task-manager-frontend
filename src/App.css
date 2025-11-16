@@ -223,7 +223,6 @@ textarea.input-field {
   transform: scale(1.1);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .container {
     padding: 20px;
