@@ -7,7 +7,8 @@ function App() {
   const [tasks, setTasks] = useState([]);
   const [editingTask, setEditingTask] = useState(null);
 
-  const API = 'http://localhost:5000/api/tasks';
+  const API = 'https://task-manager-backend-d3hb.onrender.com/api/tasks';
+
 
   const fetchAllTasks = async () => {
     try {
@@ -21,7 +22,7 @@ function App() {
 
   const createTask = async (e) => {
     e.preventDefault();
-    
+
     if (!title || !description) {
       alert('Please fill in all fields');
       return;
@@ -138,7 +139,7 @@ function App() {
     <div className="App">
       <div className="container">
         <h1>Task Manager</h1>
-        
+
         <form onSubmit={editingTask ? updateTask : createTask} className="task-form">
           <input
             type="text"
@@ -160,7 +161,7 @@ function App() {
             </button>
             {editingTask && (
               <button type="button" onClick={cancelEdit} className="btn btn-secondary">
-              Cancel
+                Cancel
               </button>
             )}
           </div>
