@@ -7,12 +7,12 @@ function App() {
   const [tasks, setTasks] = useState([]);
   const [editingTask, setEditingTask] = useState(null);
 
-  const API = 'https://task-manager-backend-d3hb.onrender.com/api/tasks/';
+  const API = 'https://task-manager-backend-d3hb.onrender.com/api/tasks';
 
 
   const fetchAllTasks = async () => {
     try {
-      const response = await fetch(API);
+      const response = await fetch(API); 
       const data = await response.json();
       setTasks(data);
     } catch (error) {
