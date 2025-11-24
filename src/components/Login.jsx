@@ -14,8 +14,17 @@ function Login({ onSwitchToRegister }) {
     setError('');
     setLoading(true);
 
+    // Validation
     if (!email || !password) {
       setError('Please fill in all fields');
+      setLoading(false);
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address');
       setLoading(false);
       return;
     }
@@ -25,6 +34,7 @@ function Login({ onSwitchToRegister }) {
       if (!result.success) {
         setError(result.message || 'Login failed');
       }
+      // If successful, AuthContext will update and App will re-render
     } catch (err) {
       setError('An error occurred during login');
     } finally {

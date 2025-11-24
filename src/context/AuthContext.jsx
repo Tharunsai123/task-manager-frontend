@@ -1,11 +1,12 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useEffect, useContext } from 'react';
+import api from '../utils/api';
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth must be used within AuthProvider');
   }
   return context;
 };
@@ -15,33 +16,30 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
-  const API = import.meta.env.VITE_API_URL || 'https://task-manager-backend-d3hb.onrender.com/api';
-
   useEffect(() => {
-    if (token) {
-      fetchUser();
-    } else {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const storedToken = localStorage.getItem('token');
+    
+    if (!storedToken) {
       setLoading(false);
+      return;
     }
-  }, [token]);
 
-  const fetchUser = async () => {
     try {
-      const response = await fetch(`${API}/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data);
-      } else {
-        logout();
-      }
+      console.log('🔐 Checking authentication...');
+      const response = await api.get('/auth/me');
+      console.log('✅ Auth check successful:', response.data);
+      setUser(response.data);
+      setToken(storedToken);
     } catch (error) {
-      console.error('Error fetching user:', error);
-      logout();
+      console.error('❌ Auth check failed:', error);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setUser(null);
+      setToken(null);
     } finally {
       setLoading(false);
     }
@@ -49,60 +47,62 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch(`${API}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('token', data.token);
-        setToken(data.token);
-        setUser(data.user);
-        return { success: true };
-      } else {
-        return { success: false, message: data.message || 'Login failed' };
-      }
+      console.log('🔑 Attempting login...');
+      const response = await api.post('/auth/login', { email, password });
+      
+      const { token: newToken, user: userData } = response.data;
+      
+      localStorage.setItem('token', newToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      setToken(newToken);
+      setUser(userData);
+      
+      console.log('✅ Login successful:', userData);
+      return { success: true };
     } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, message: 'Network error. Please try again.' };
+      console.error('❌ Login failed:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Login failed'
+      };
     }
   };
 
   const register = async (username, email, password) => {
     try {
-      const response = await fetch(`${API}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, email, password }),
+      console.log('📝 Attempting registration...');
+      const response = await api.post('/auth/register', {
+        username,
+        email,
+        password
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('token', data.token);
-        setToken(data.token);
-        setUser(data.user);
-        return { success: true };
-      } else {
-        return { success: false, message: data.message || 'Registration failed' };
-      }
+      
+      const { token: newToken, user: userData } = response.data;
+      
+      localStorage.setItem('token', newToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      setToken(newToken);
+      setUser(userData);
+      
+      console.log('✅ Registration successful:', userData);
+      return { success: true };
     } catch (error) {
-      console.error('Registration error:', error);
-      return { success: false, message: 'Network error. Please try again.' };
+      console.error('❌ Registration failed:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Registration failed'
+      };
     }
   };
 
   const logout = () => {
+    console.log('👋 Logging out...');
     localStorage.removeItem('token');
-    setToken(null);
+    localStorage.removeItem('user');
     setUser(null);
+    setToken(null);
   };
 
   const value = {
@@ -112,6 +112,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    checkAuth
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -3,9 +3,8 @@ import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import Login from './components/Login.jsx';
 import Register from './components/Register.jsx';
 import Profile from './components/Profile.jsx';
+import api from './utils/api';
 import './App.css';
-
-// ... rest of your code
 
 function TaskManager() {
   const [title, setTitle] = useState('');
@@ -24,9 +23,7 @@ function TaskManager() {
     localStorage.getItem('darkMode') === 'true'
   );
 
-  const { user, logout, token } = useAuth();
-  const API = `${import.meta.env.VITE_API_URL}/tasks` || 'https://task-manager-backend-d3hb.onrender.com/api/tasks';
-  
+  const { user, logout } = useAuth();
 
   // Dark Mode Effect
   useEffect(() => {
@@ -40,7 +37,7 @@ function TaskManager() {
 
   const fetchAllTasks = async () => {
     try {
-      let url = API;
+      let url = '/tasks';
       const params = new URLSearchParams();
       
       if (filter !== 'all') params.append('status', filter);
@@ -48,29 +45,34 @@ function TaskManager() {
       
       if (params.toString()) url += `?${params.toString()}`;
 
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      }); 
-      const data = await response.json();
-      setTasks(data);
+      console.log('📋 Fetching tasks...');
+
+      const response = await api.get(url);
+      console.log('✅ Tasks loaded:', response.data);
+      
+      // Ensure data is an array
+      if (Array.isArray(response.data)) {
+        setTasks(response.data);
+      } else {
+        console.error('❌ Tasks data is not an array:', response.data);
+        setTasks([]);
+      }
     } catch (error) {
-      console.error('Error fetching tasks:', error);
+      console.error('❌ Error fetching tasks:', error);
+      setTasks([]);
     }
   };
 
   const fetchStats = async () => {
     try {
-      const response = await fetch(`${API}/stats/summary`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      setStats(data);
+      console.log('📊 Fetching stats...');
+      
+      const response = await api.get('/tasks/stats/summary');
+      console.log('✅ Stats loaded:', response.data);
+      setStats(response.data);
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error('❌ Error fetching stats:', error);
+      setStats(null);
     }
   };
 
@@ -83,29 +85,23 @@ function TaskManager() {
     }
 
     try {
-      const response = await fetch(API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ 
-          title, 
-          description, 
-          priority, 
-          category, 
-          dueDate: dueDate || null,
-          tags: tags ? tags.split(',').map(tag => tag.trim()) : []
-        }),
+      const response = await api.post('/tasks', { 
+        title, 
+        description, 
+        priority, 
+        category, 
+        dueDate: dueDate || null,
+        tags: tags ? tags.split(',').map(tag => tag.trim()) : []
       });
 
-      if (response.ok) {
+      if (response.status === 201) {
         resetForm();
         fetchAllTasks();
         fetchStats();
       }
     } catch (error) {
       console.error('Error creating task:', error);
+      alert('Error creating task');
     }
   };
 
@@ -115,42 +111,27 @@ function TaskManager() {
     }
 
     try {
-      const response = await fetch(`${API}/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        fetchAllTasks();
-        fetchStats();
-      }
+      await api.delete(`/tasks/${id}`);
+      fetchAllTasks();
+      fetchStats();
     } catch (error) {
       console.error('Error deleting task:', error);
+      alert('Error deleting task');
     }
   };
 
   const toggleComplete = async (task) => {
     try {
-      const response = await fetch(`${API}/${task._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          ...task,
-          completed: !task.completed
-        }),
+      await api.put(`/tasks/${task._id}`, {
+        ...task,
+        completed: !task.completed
       });
 
-      if (response.ok) {
-        fetchAllTasks();
-        fetchStats();
-      }
+      fetchAllTasks();
+      fetchStats();
     } catch (error) {
       console.error('Error toggling task:', error);
+      alert('Error updating task');
     }
   };
 
@@ -174,48 +155,32 @@ function TaskManager() {
     }
 
     try {
-      const response = await fetch(`${API}/${editingTask._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          title,
-          description,
-          priority,
-          category,
-          dueDate: dueDate || null,
-          tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
-          completed: editingTask.completed
-        }),
+      await api.put(`/tasks/${editingTask._id}`, {
+        title,
+        description,
+        priority,
+        category,
+        dueDate: dueDate || null,
+        tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
+        completed: editingTask.completed
       });
 
-      if (response.ok) {
-        resetForm();
-        fetchAllTasks();
-        fetchStats();
-      }
+      resetForm();
+      fetchAllTasks();
+      fetchStats();
     } catch (error) {
       console.error('Error updating task:', error);
+      alert('Error updating task');
     }
   };
 
   // Duplicate Task Function
   const duplicateTask = async (taskId) => {
     try {
-      const response = await fetch(`${API}/${taskId}/duplicate`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        fetchAllTasks();
-        fetchStats();
-        alert('Task duplicated successfully!');
-      }
+      await api.post(`/tasks/${taskId}/duplicate`);
+      fetchAllTasks();
+      fetchStats();
+      alert('Task duplicated successfully!');
     } catch (error) {
       console.error('Error duplicating task:', error);
       alert('Error duplicating task');
@@ -225,14 +190,8 @@ function TaskManager() {
   // Export Tasks Function
   const exportTasks = async () => {
     try {
-      const response = await fetch(`${API}/export/json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-      const blob = new Blob([JSON.stringify(data, null, 2)], 
+      const response = await api.get('/tasks/export/json');
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], 
         { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -258,11 +217,11 @@ function TaskManager() {
   };
 
   useEffect(() => {
-    if (token && currentView === 'tasks') {
+    if (currentView === 'tasks') {
       fetchAllTasks();
       fetchStats();
     }
-  }, [filter, searchTerm, token, currentView]);
+  }, [filter, searchTerm, currentView]);
 
   const getPriorityColor = (priority) => {
     switch(priority) {
