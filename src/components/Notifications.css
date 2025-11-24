@@ -1,0 +1,64 @@
+.notifications-panel {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.notification-section {
+  margin-bottom: 20px;
+}
+
+.notification-section h3 {
+  margin-bottom: 15px;
+  font-size: 18px;
+}
+
+.notification-section.overdue h3 {
+  color: #e74c3c;
+}
+
+.notification-section.upcoming h3 {
+  color: #f39c12;
+}
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notification-item {
+  background: #f8f9fa;
+  padding: 12px 15px;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.notification-section.overdue .notification-item {
+  border-left-color: #e74c3c;
+}
+
+.notification-section.upcoming .notification-item {
+  border-left-color: #f39c12;
+}
+
+.notification-title {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.notification-date,
+.notification-priority {
+  font-size: 13px;
+  color: #666;
+}
+
+.no-notifications {
+  text-align: center;
+  padding: 40px;
+  color: #2ecc71;
+  font-size: 18px;
+}
