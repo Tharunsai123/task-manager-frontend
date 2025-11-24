@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
-  const API = import.meta.env.VITE_API_URL || 'https://task-manager-backend-d3hb.onrender.com/';
+  const API = import.meta.env.VITE_API_URL || 'https://task-manager-backend-d3hb.onrender.com/api';
 
   useEffect(() => {
     if (token) {

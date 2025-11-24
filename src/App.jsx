@@ -25,7 +25,7 @@ function TaskManager() {
   );
 
   const { user, logout, token } = useAuth();
-  const API = `${import.meta.env.VITE_API_URL}/tasks` || 'https://task-manager-backend-d3hb.onrender.com/';
+  const API = `${import.meta.env.VITE_API_URL}/tasks` || 'https://task-manager-backend-d3hb.onrender.com/api/tasks';
   
 
   // Dark Mode Effect
